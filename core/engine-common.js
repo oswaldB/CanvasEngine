@@ -1,7 +1,5 @@
 var fs;
-if (typeof(require) !== "undefined") {
-	fs = require('fs');
-}
+
 
 function Kernel(class_method, name) {
 	this.class_method = class_method;
