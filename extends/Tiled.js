@@ -49,7 +49,7 @@ Class.create("Tiled", {
 		@param {CanvasEngine.Element} el The element containing layers of Tiled
 		@param {String} url Path to JSON file of Tiled Map Editor
 	 */
-	load: function(scene, el, url) {
+	load: function(scene, el, url, canvas) {
 		var self = this;
 		this.el = el;
 		this.url = url;
@@ -61,6 +61,7 @@ Class.create("Tiled", {
 			self.height = data.height;
 			self.tilesets = data.tilesets;
 			self.layers = data.layers;
+			orientation = self.orientation = data.orientation;
 			self.tilesetsIndexed = [];
 			for (var i=0 ; i < self.tilesets.length ; i++) {
 				var props = self.tilesets[i].tileproperties,
@@ -78,10 +79,10 @@ Class.create("Tiled", {
 				_id = self.tilesetsIndexed[m] ? m : _id;
 				self.tilesetsIndexed[m] = self.tilesetsIndexed[_id];
 			}
-			self._draw();
+			self._draw(orientation,canvas);
 		});
 	},
-	_draw: function() {
+	_draw: function(orientation,canvas) {
 		this.map = this.scene.createElement();
 		this.el_layers = [];
 		var x, y, tileset;
@@ -97,11 +98,21 @@ Class.create("Tiled", {
                             _tile = this.scene.createElement();
 							tileset = this.tilesetsIndexed[_id];
 							_id -= tileset.firstgid;
-							y = this.tile_h * Math.floor(_id / (Math.round(tileset.imagewidth / this.tile_h)));
-							x = this.tile_w * (_id % Math.round(tileset.imagewidth / this.tile_w));
-							
-							_tile.drawImage(tileset.name, x, y, this.tile_w, this.tile_h, j * this.tile_w, k * this.tile_h, this.tile_w, this.tile_h);
-							this.el_layers[i].append(_tile);
+							if(self.orientation == "orthogonal"){
+								y = this.tile_h * Math.floor(_id / (Math.round(tileset.imagewidth / this.tile_h)));
+								x = this.tile_w * (_id % Math.round(tileset.imagewidth / this.tile_w));
+
+								_tile.drawImage(tileset.name, x, y, this.tile_w, this.tile_h, j * this.tile_w, k * this.tile_h, this.tile_w, this.tile_h);
+								this.el_layers[i].append(_tile);
+							}else{
+								var valeur = 1.75;
+								y = (j + k) * this.tile_h/2;
+								x = (j - k)* this.tile_w/2 ;
+
+								x += (canvas.width / valeur) - (this.tile_w / valeur);
+								_tile.drawImage(tileset.name, Math.round(x),Math.round(y));
+								this.el_layers[i].append(_tile);
+							}
 						}
 						id++;
 					}
@@ -144,7 +155,7 @@ Class.create("Tiled", {
 	},
 	 /**
 		@doc tiled/
-		@method getTileWidth Returns the width of the map in tiles 
+		@method getTileWidth Returns the width of the map in tiles
 		@return {Integer}
 	 */
 	getTileWidth: function() {
@@ -152,7 +163,7 @@ Class.create("Tiled", {
 	},
 	 /**
 		@doc tiled/
-		@method getTileWidth Returns the height of the map in tiles 
+		@method getTileWidth Returns the height of the map in tiles
 		@return {Integer}
 	 */
 	getTileHeight: function() {
@@ -220,7 +231,7 @@ Class.create("Tiled", {
 			}
 			return _layers;
 		}
-		
+
 		if (layerOrX === undefined) {
 			return _getTileLayers(tile);
 		}
@@ -245,7 +256,7 @@ Consider adding inserting Tiled.js
 	   var canvas = CE.defines("canvas_id").
 		extend(Tiled).
 		ready(function() {
-			
+
 		});
 	 </script>
 
@@ -260,7 +271,7 @@ Consider adding inserting Tiled.js
 		ready(function() {
 			canvas.Scene.call("MyScene");
 		});
-		
+
 	canvas.Scene.new({
 		name: "MyScene",
 		materials: {
@@ -271,7 +282,7 @@ Consider adding inserting Tiled.js
 		ready: function(stage) {
 			 var el = this.createElement();
 			 var tiled = canvas.Tiled.new();
-			
+
 			tiled.ready(function() {
 				 var tile_w = this.getTileWidth(),
 					 tile_h = this.getTileHeight(),
@@ -286,7 +297,7 @@ Consider adding inserting Tiled.js
 2. `getLayer()` retrieves a layer. The name is the same as in Tiled Map Editor
 
 ![](http://canvasengine.net/presentation/images/tiled2.png)
-	
+
 */
 var Tiled = {
 	Tiled: {
